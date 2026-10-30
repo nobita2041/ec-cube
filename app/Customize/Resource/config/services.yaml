@@ -1,0 +1,6 @@
+parameters:
+    env(ECCUBE_BUSINESS_QUOTES): '0'
+services:
+    Customize\Service\QuoteSettings:
+        arguments:
+            $enabled: '%env(bool:ECCUBE_BUSINESS_QUOTES)%'

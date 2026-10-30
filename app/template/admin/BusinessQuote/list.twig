@@ -1,0 +1,18 @@
+{% extends '@admin/default_frame.twig' %}
+{% set menus = ['order', 'admin_business_quotes'] %}
+{% block title %}法人見積依頼{% endblock %}
+{% block sub_title %}デモ / 概算見積{% endblock %}
+{% block main %}
+<div class="c-contentsArea__cols"><div class="c-contentsArea__primaryCol"><div class="c-primaryCol">
+<div class="card rounded border-0 mb-4"><div class="card-header"><h5 class="mb-0">法人見積一覧</h5></div><div class="card-body">
+<p class="text-muted">見積依頼のみを保存しています。注文・在庫・通常購入の金額には影響しません。</p>
+<div class="table-responsive"><table class="table">
+<thead><tr><th>見積番号 / 発行日</th><th>会社 / 担当者</th><th>商品 / 数量</th><th>税込合計</th><th></th></tr></thead>
+<tbody>{% for quote in quotes %}{% set q = quote.snapshot %}
+<tr><td>{{ q.number }}<br><small>{{ q.issued }}</small></td><td>{{ q.company }}<br>{{ q.contact }}</td><td>{{ q.productName }}<br>{{ q.quantity|number_format }}個 / {{ q.rate }}%引き</td><td>￥{{ q.total|number_format }}</td><td><a class="btn btn-outline-primary" href="{{ path('admin_business_quote_show', {id: quote.id}) }}">詳細</a></td></tr>
+{% else %}<tr><td colspan="5">見積依頼はまだありません。</td></tr>{% endfor %}</tbody></table></div>
+<nav aria-label="ページ"><span>{{ page }}ページ</span>
+{% if page > 1 %}<a class="btn btn-light" href="{{ path('admin_business_quotes', {page: page - 1}) }}">前へ</a>{% endif %}
+{% if quotes|length == 20 %}<a class="btn btn-light" href="{{ path('admin_business_quotes', {page: page + 1}) }}">次へ</a>{% endif %}</nav>
+</div></div></div></div></div>
+{% endblock %}
