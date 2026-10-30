@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of EC-CUBE
  *
@@ -16,6 +18,8 @@ namespace Eccube\Tests\Web;
 use Customize\Entity\BusinessQuote;
 use Customize\Service\BusinessQuoteService;
 use Customize\Service\QuoteSettings;
+use Doctrine\ORM\EntityManagerInterface;
+use Eccube\Entity\ProductClass;
 
 final class BusinessQuoteControllerTest extends AbstractWebTestCase
 {
@@ -46,24 +50,24 @@ final class BusinessQuoteControllerTest extends AbstractWebTestCase
         $url = $this->client->getResponse()->headers->get('Location');
         $id = basename($url);
         $quote = static::getContainer()->get(BusinessQuoteService::class)->find($id);
-        self::assertInstanceOf(BusinessQuote::class, $quote);
-        self::assertSame('15000', $quote->getSnapshot()['discount']);
-        self::assertSame('85000', $quote->getSnapshot()['net']);
+        $this->assertInstanceOf(BusinessQuote::class, $quote);
+        $this->assertSame('15000', $quote->getSnapshot()['discount']);
+        $this->assertSame('85000', $quote->getSnapshot()['net']);
         $this->client->followRedirect();
         self::assertResponseIsSuccessful();
-        self::assertStringContainsString('alert(1)', $this->client->getResponse()->getContent());
-        self::assertStringNotContainsString('<script>alert(1)</script>', $this->client->getResponse()->getContent());
+        $this->assertStringContainsString('alert(1)', (string) $this->client->getResponse()->getContent());
+        $this->assertStringNotContainsString('<script>alert(1)</script>', (string) $this->client->getResponse()->getContent());
 
         // Later catalogue changes must not change an already issued quote.
-        $em = static::getContainer()->get(\Doctrine\ORM\EntityManagerInterface::class);
-        $em->find(\Eccube\Entity\ProductClass::class, $pc->getId())->setPrice02('9000');
+        $em = static::getContainer()->get(EntityManagerInterface::class);
+        $em->find(ProductClass::class, $pc->getId())->setPrice02('9000');
         $em->flush();
         $this->client->request('GET', $this->generateUrl('business_quote_pdf', ['id' => $id]));
         self::assertResponseIsSuccessful();
         self::assertResponseHeaderSame('Content-Type', 'application/pdf');
-        self::assertStringStartsWith('%PDF-', $this->client->getResponse()->getContent());
-        self::assertStringContainsString('no-store', $this->client->getResponse()->headers->get('Cache-Control'));
-        self::assertSame('85000', $quote->getSnapshot()['net']);
+        $this->assertStringStartsWith('%PDF-', $this->client->getResponse()->getContent());
+        $this->assertStringContainsString('no-store', (string) $this->client->getResponse()->headers->get('Cache-Control'));
+        $this->assertSame('85000', $quote->getSnapshot()['net']);
 
         $this->client->getCookieJar()->clear();
         $this->client->request('GET', $url);
@@ -75,12 +79,12 @@ final class BusinessQuoteControllerTest extends AbstractWebTestCase
         $this->loginTo($this->createMember());
         $this->client->request('GET', $this->generateUrl('admin_business_quotes'));
         self::assertResponseIsSuccessful();
-        self::assertStringContainsString($quote->getSnapshot()['number'], $this->client->getResponse()->getContent());
+        $this->assertStringContainsString($quote->getSnapshot()['number'], (string) $this->client->getResponse()->getContent());
         $this->client->request('GET', $this->generateUrl('admin_business_quote_show', ['id' => $id]));
         self::assertResponseIsSuccessful();
         $this->client->request('GET', $this->generateUrl('admin_business_quote_pdf', ['id' => $id]));
         self::assertResponseIsSuccessful();
-        self::assertStringStartsWith('%PDF-', $this->client->getResponse()->getContent());
+        $this->assertStringStartsWith('%PDF-', $this->client->getResponse()->getContent());
     }
 
     public function testCsrfRejectsUnprotectedRequest(): void
@@ -95,7 +99,7 @@ final class BusinessQuoteControllerTest extends AbstractWebTestCase
             ],
         ]);
         self::assertResponseIsSuccessful();
-        self::assertSame($before, $this->entityManager->getRepository(BusinessQuote::class)->count([]));
+        $this->assertSame($before, $this->entityManager->getRepository(BusinessQuote::class)->count([]));
     }
 
     public function testDisabledFeaturePreservesShopAndRejectsDirectRoutes(): void
@@ -106,7 +110,7 @@ final class BusinessQuoteControllerTest extends AbstractWebTestCase
         self::assertResponseStatusCodeSame(404);
         $this->client->request('GET', $this->generateUrl('homepage'));
         self::assertResponseIsSuccessful();
-        self::assertStringNotContainsString('法人見積・まとめ買い', $this->client->getResponse()->getContent());
+        $this->assertStringNotContainsString('法人見積・まとめ買い', (string) $this->client->getResponse()->getContent());
     }
 
     public function testEstimateRejectsInvalidQuantitiesAndHiddenProduct(): void
@@ -117,8 +121,8 @@ final class BusinessQuoteControllerTest extends AbstractWebTestCase
             $this->client->request('GET', $this->generateUrl('business_quote_estimate', ['product' => $pc->getId(), 'quantity' => $quantity]));
             self::assertResponseStatusCodeSame(400);
         }
-        $em = static::getContainer()->get(\Doctrine\ORM\EntityManagerInterface::class);
-        $em->find(\Eccube\Entity\ProductClass::class, $pc->getId())->setVisible(false);
+        $em = static::getContainer()->get(EntityManagerInterface::class);
+        $em->find(ProductClass::class, $pc->getId())->setVisible(false);
         $em->flush();
         $this->client->request('GET', $this->generateUrl('business_quote_estimate', ['product' => $pc->getId(), 'quantity' => 100]));
         self::assertResponseStatusCodeSame(400);
