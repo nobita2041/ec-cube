@@ -1,0 +1,14 @@
+<dl>
+  <dt>見積番号</dt><dd>{{ q.number }}</dd>
+  <dt>宛名</dt><dd>{{ q.company }} 御中 / {{ q.contact }} 様</dd>
+  <dt>メールアドレス</dt><dd>{{ q.email }}</dd>
+  <dt>発行日 / 有効期限</dt><dd>{{ q.issued }} / {{ q.expires }}</dd>
+  <dt>商品・数量</dt><dd>{{ q.productName }} × {{ q.quantity|number_format }}個</dd>
+</dl>
+<div class="bq-row"><span>通常単価（税抜）</span><strong>￥{{ q.unitPrice|number_format }}</strong></div>
+<div class="bq-row"><span>通常商品合計（税抜）</span><strong>￥{{ q.subtotal|number_format }}</strong></div>
+<div class="bq-row bq-discount"><span>まとめ買い割引（{{ q.rate }}%）</span><strong>− ￥{{ q.discount|number_format }}</strong></div>
+<div class="bq-row"><span>割引後商品合計（税抜）</span><strong>￥{{ q.net|number_format }}</strong></div>
+<div class="bq-row"><span>消費税</span><strong>￥{{ q.tax|number_format }}</strong></div>
+<div class="bq-row"><span>合計（税込）</span><strong class="bq-total">￥{{ q.total|number_format }}</strong></div>
+<p class="bq-note" style="margin-top:18px">概算見積・送料別途・有効期限30日。正式注文や在庫確保ではありません。メールは送信していません。</p>

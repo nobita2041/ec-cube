@@ -1,0 +1,87 @@
+{% extends 'default_frame.twig' %}
+{% block stylesheet %}{{ include('BusinessQuote/style.twig') }}{% endblock %}
+{% block main %}
+<main class="bq">
+    <a href="{{ path('homepage') }}">← ショップへ戻る</a>
+    <div style="margin-top:28px" class="bq-eyebrow">BUSINESS / 法人のお客様へ</div>
+    <h1>まとめて頼む。お得に見積もる。</h1>
+    <p class="bq-intro">イベント・オフィス・お取引先へのギフトに。数量に応じた概算見積書を、その場でPDFに。</p>
+    <div class="bq-grid">
+      <section class="bq-card">
+        <h2>01　商品とお客様情報</h2>
+        {{ form_start(form) }}
+        {{ form_errors(form) }}
+        {{ form_row(form.product) }}
+        {{ form_row(form.quantity) }}
+        <p class="bq-note">同一商品・同一規格での数量です。1〜10,000個まで入力できます。</p>
+        {{ form_row(form.company) }}
+        {{ form_row(form.contact) }}
+        {{ form_row(form.email) }}
+        {{ form_rest(form) }}
+        <p class="bq-note" style="margin-top:20px">送信すると見積依頼を保存し、PDFを発行します。注文の確定・決済・メール送信は行いません。デモ用の情報を入力してください。</p>
+        <button type="submit" class="bq-btn" style="width:100%" id="bq-submit">見積を依頼してPDFを発行 →</button>
+        {{ form_end(form) }}
+      </section>
+      <aside class="bq-card bq-summary" aria-label="見積金額">
+        <h2>02　概算お見積り</h2>
+        <p id="bq-product">商品を選択してください</p>
+        <div class="bq-tiers">
+          <div class="bq-tier">10個以上<strong>5% OFF</strong></div>
+          <div class="bq-tier">50個以上<strong>10% OFF</strong></div>
+          <div class="bq-tier">100個以上<strong>15% OFF</strong></div>
+        </div>
+        <div id="bq-error" class="bq-error" role="status"></div>
+        <div id="bq-amounts" aria-live="polite">
+          <div class="bq-row"><span>通常単価（税抜）</span><strong id="bq-unit">—</strong></div>
+          <div class="bq-row"><span>通常商品合計（税抜）</span><strong id="bq-subtotal">—</strong></div>
+          <div class="bq-row bq-discount"><span>まとめ買い割引 <b id="bq-rate"></b></span><strong id="bq-discount">—</strong></div>
+          <div class="bq-row"><span>割引後商品合計（税抜）</span><strong id="bq-net">—</strong></div>
+          <div class="bq-row"><span>消費税</span><strong id="bq-tax">—</strong></div>
+          <div class="bq-row"><span>合計（税込）</span><strong class="bq-total" id="bq-total">—</strong></div>
+        </div>
+        <p class="bq-note" style="margin-top:18px">送料別途 / 有効期限30日<br>割引は税抜合計に適用し、割引額の円未満を切り捨てます。消費税は店舗の税設定で計算します。</p>
+        <p class="bq-note">デモ用の割引条件です。正式価格・納期・在庫は担当者確認後に確定します。通常購入のカート価格は変わりません。</p>
+      </aside>
+    </div>
+</main>
+{% endblock %}
+{% block javascript %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const product = document.getElementById('business_quote_product');
+    const quantity = document.getElementById('business_quote_quantity');
+    const button = document.getElementById('bq-submit');
+    const yen = value => '￥' + Number(value).toLocaleString('ja-JP');
+    let version = 0, timer;
+    async function estimate() {
+        const current = ++version;
+        button.disabled = true;
+        document.getElementById('bq-error').textContent = '金額を計算しています…';
+        document.getElementById('bq-amounts').style.opacity = '.4';
+        try {
+            const params = new URLSearchParams({product: product.value, quantity: quantity.value});
+            const response = await fetch('{{ path('business_quote_estimate')|e('js') }}?' + params, {headers: {'Accept': 'application/json'}});
+            const data = await response.json();
+            if (current !== version) return;
+            if (!response.ok) throw new Error(data.error || '金額を取得できませんでした。');
+            document.getElementById('bq-product').textContent = data.productName + ' × ' + data.quantity + '個';
+            for (const key of ['subtotal', 'discount', 'net', 'tax', 'total']) {
+                document.getElementById('bq-' + key).textContent = (key === 'discount' ? '− ' : '') + yen(data[key]);
+            }
+            document.getElementById('bq-unit').textContent = yen(data.unitPrice);
+            document.getElementById('bq-rate').textContent = data.rate + '%';
+            document.getElementById('bq-error').textContent = '';
+            document.getElementById('bq-amounts').style.opacity = '1';
+            button.disabled = false;
+        } catch (error) {
+            if (current === version) document.getElementById('bq-error').textContent = error.message;
+        }
+    }
+    for (const input of [product, quantity]) input.addEventListener('input', () => {
+        ++version; button.disabled = true; clearTimeout(timer); timer = setTimeout(estimate, 200);
+    });
+    button.form.addEventListener('submit', () => { button.disabled = true; button.textContent = '見積を発行しています…'; });
+    estimate();
+});
+</script>
+{% endblock %}

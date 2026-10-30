@@ -1,0 +1,15 @@
+{% extends '@admin/default_frame.twig' %}
+{% set menus = ['order', 'admin_business_quotes'] %}
+{% block title %}法人見積詳細{% endblock %}
+{% block sub_title %}{{ q.number }}{% endblock %}
+{% block main %}
+<div class="card rounded border-0 m-4"><div class="card-body">
+<dl class="row">
+{% for label, value in {'会社名': q.company, '担当者': q.contact, 'メール': q.email, '発行日': q.issued, '有効期限': q.expires, '商品': q.productName, '数量': q.quantity, '割引率': q.rate ~ '%', '通常合計（税抜）': '￥' ~ q.subtotal|number_format, '割引額': '￥' ~ q.discount|number_format, '消費税': '￥' ~ q.tax|number_format, '合計（税込）': '￥' ~ q.total|number_format} %}
+<dt class="col-sm-3">{{ label }}</dt><dd class="col-sm-9">{{ value }}</dd>
+{% endfor %}</dl>
+<p class="text-muted">発行時点の金額を保存しています。概算見積・送料別途・正式注文ではありません。</p>
+<a class="btn btn-primary" href="{{ path('admin_business_quote_pdf', {id: quote.id}) }}">見積書PDFをダウンロード</a>
+<a class="btn btn-light" href="{{ path('admin_business_quotes') }}">一覧へ戻る</a>
+</div></div>
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends 'default_frame.twig' %}
+{% block stylesheet %}{{ include('BusinessQuote/style.twig') }}{% endblock %}
+{% block main %}
+<main class="bq" style="max-width:800px">
+  <div class="bq-success">✓ 見積依頼を受け付けました</div>
+  <div class="bq-eyebrow">YOUR QUOTATION</div>
+  <h1>見積書の準備ができました。</h1>
+  <p class="bq-intro">PDFをダウンロードして、社内でのご検討にお使いください。</p>
+  <section class="bq-card">
+    {{ include('BusinessQuote/summary.twig') }}
+    <div class="bq-links">
+      <a class="bq-btn" href="{{ path('business_quote_pdf', {id: quote.id}) }}">見積書PDFをダウンロード ↓</a>
+      <a href="{{ path('business_quote') }}">別の見積を作成</a>
+    </div>
+    <p class="bq-note" style="margin-top:18px">この画面とPDFは、依頼したブラウザのセッションでのみ開けます。セッションが切れる前に保存してください。</p>
+  </section>
+</main>
+{% endblock %}
